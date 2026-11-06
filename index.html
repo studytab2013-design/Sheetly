@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sheetly — Spreadsheet</title>
+<style>
+:root{--bg:#fff;--panel:#f6f8f7;--text:#18231e;--muted:#68756e;--line:#dce4df;--green:#16834a;--green2:#e6f4eb;--head:#f0f4f1;--shadow:0 8px 28px #102b1a14}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body.dark{--bg:#121714;--panel:#1b2420;--text:#edf5ef;--muted:#a0afa5;--line:#34423a;--green:#5ac987;--green2:#20392b;--head:#202b25;--shadow:0 8px 28px #0005}
+.top{display:flex;align-items:center;gap:13px;padding:12px 17px;border-bottom:1px solid var(--line);flex-wrap:wrap}.logo{font-size:21px;font-weight:850;color:var(--green);letter-spacing:-.7px}.filename{border:0;background:transparent;color:var(--text);font:600 15px system-ui;width:170px;padding:5px}.save{font-size:12px;color:var(--muted)}.actions{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+button,select{font:600 13px system-ui;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;cursor:pointer}button:hover{background:var(--panel)}button.primary{background:var(--green);color:#fff;border-color:var(--green)}button.active{background:var(--green2);border-color:var(--green);color:var(--green)}
+.toolbar{display:flex;gap:7px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.toolbar button{min-width:33px;padding:6px 9px}.toolbar input[type=color]{width:27px;height:25px;padding:1px;border:1px solid var(--line);vertical-align:middle;background:var(--bg)}.formula{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line)}#cellRef{width:66px;text-align:center;font-weight:700}#formulaInput{flex:1;min-width:100px}.formula input{padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text)}.fx{font-weight:900;color:var(--green)}
+.gridwrap{height:calc(100vh - 210px);min-height:250px;overflow:auto}.grid{border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:100%}.grid th,.grid td{height:30px;min-width:120px;max-width:240px;padding:4px 7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.grid thead th{position:sticky;top:0;z-index:2;background:var(--head);text-align:center;color:var(--muted)}.grid .corner{left:0;z-index:4;position:sticky;width:44px;min-width:44px}.grid .rowhead{position:sticky;left:0;z-index:1;background:var(--head);text-align:center;width:44px;min-width:44px;color:var(--muted);font-weight:500}.grid td{outline:none;background:var(--bg)}.grid td:focus{outline:2px solid var(--green);outline-offset:-2px}.grid td.selected{box-shadow:inset 0 0 0 2px var(--green)}
+.bottom{display:flex;align-items:center;gap:6px;padding:8px 13px;border-top:1px solid var(--line);background:var(--panel);min-height:48px}.tab{padding:7px 13px;border-radius:6px;background:transparent;border:0}.tab.active{background:var(--green2);color:var(--green)}.spacer{flex:1}.hint{font-size:12px;color:var(--muted)}.modalback{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:18px}.modalback.show{display:flex}.modal{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(650px,100%);box-shadow:var(--shadow)}.modal h2{margin:0 0 12px}.chart{height:260px;display:flex;align-items:end;gap:12px;padding:20px 12px 28px;border-bottom:1px solid var(--line);overflow:auto}.barwrap{height:100%;min-width:38px;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:6px}.bar{width:28px;background:var(--green);border-radius:5px 5px 0 0;min-height:2px}.barlabel{font-size:11px;color:var(--muted);max-width:65px;overflow:hidden;text-overflow:ellipsis}.barval{font-size:11px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+@media(max-width:650px){.actions{margin-left:0}.filename{width:125px}.gridwrap{height:calc(100vh - 260px)}.hint{display:none}}
+</style></head>
+<body>
+<header class="top"><div class="logo">▦ Sheetly <small style="font-size:10px;color:var(--muted);font-weight:600">MAX</small></div><input class="filename" id="filename" value="My spreadsheet" aria-label="File name"><span class="save" id="saveStatus">● Saved locally</span><div class="actions"><button id="newBtn">＋ New</button><button id="backupBtn">Save backup</button><button id="restoreBtn">Restore backup</button><input id="backupInput" type="file" accept=".json,application/json" hidden><button id="csvBtn">Export CSV</button><button id="importBtn">Import CSV</button><input id="fileInput" type="file" accept=".csv,text/csv" hidden><button id="chartBtn">▥ Chart</button><button id="themeBtn">☾ Dark</button><button class="primary" id="sampleBtn">Load sample</button></div></header>
+<nav class="toolbar"><button id="boldBtn" title="Bold"><b>B</b></button><button id="italicBtn" title="Italic"><i>I</i></button><button id="leftBtn">☰</button><button id="centerBtn">≡</button><select id="fontSize" aria-label="Font size"><option>12</option><option selected>14</option><option>16</option><option>18</option><option>20</option></select><label class="hint">Text <input id="textColor" type="color" value="#18231e" title="Text colour"></label><label class="hint">Fill <input id="fillColor" type="color" value="#fff2b2" title="Cell fill"></label><button id="undoBtn" title="Undo (Ctrl+Z)">↶ Undo</button><button id="redoBtn" title="Redo (Ctrl+Y)">↷ Redo</button><button id="clearBtn">Clear cell</button><button id="sumBtn">∑ AutoSum</button></nav>
+<div class="formula"><input id="cellRef" value="A1" readonly aria-label="Cell reference"><span class="fx">fx</span><input id="formulaInput" placeholder="Enter a value or formula, e.g. =SUM(A1:A5)" aria-label="Formula bar"></div>
+<main class="gridwrap"><table class="grid" id="sheet"><thead><tr id="head"><th class="corner"></th></tr></thead><tbody id="body"></tbody></table></main>
+<footer class="bottom" id="tabs"><button class="tab active" data-tab="0">Sheet1</button><button id="addSheet" title="Add worksheet">＋</button><button id="duplicateSheet" title="Duplicate active sheet">Duplicate</button><button id="deleteSheet" title="Delete active sheet">Delete</button><span class="spacer"></span><span class="hint">26 columns · 200 rows · Undo/redo · Auto-save + backup</span></footer>
+<div class="modalback" id="chartModal"><section class="modal"><h2 id="chartTitle">Your chart</h2><p class="hint">A quick bar chart from the first two columns with data.</p><div class="chart" id="chart"></div><div class="modal-actions"><button id="closeChart">Close</button></div></section></div>
+<script>
+const COLS=26,ROWS=200,STORE='sheetly-max-data';let sheets=[],active=0,selected={r:0,c:0},undoStack=[],redoStack=[],historyLock=false;
+function snapshot(){return JSON.stringify({sheets,active})}
+function remember(){if(historyLock)return;undoStack.push(snapshot());if(undoStack.length>60)undoStack.shift();redoStack=[]}
+function restoreSnapshot(s){historyLock=true;const x=JSON.parse(s);sheets=x.sheets;active=Math.min(x.active||0,sheets.length-1);build();renderTabs();document.getElementById('filename').value=current().name;save();historyLock=false}
+function undo(){if(!undoStack.length)return;redoStack.push(snapshot());restoreSnapshot(undoStack.pop())}
+function redo(){if(!redoStack.length)return;undoStack.push(snapshot());restoreSnapshot(redoStack.pop())}
+const letters=n=>{let s='';for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s};
+const key=(r,c)=>letters(c)+(r+1),head=document.getElementById('head'),body=document.getElementById('body');
+function fresh(name){return{name,data:{},styles:{}}}
+function current(){return sheets[active]}
+function load(){try{let raw=localStorage.getItem(STORE)||localStorage.getItem('sheetly-v4-data')||localStorage.getItem('sheetly-v3-data')||localStorage.getItem('sheetly-v2-data');let x=raw?JSON.parse(raw):null;if(x?.sheets?.length){sheets=x.sheets;active=Number.isInteger(x.active)?x.active:0}else sheets=[fresh('Sheet1')]}catch{sheets=[fresh('Sheet1')]}}
+function save(){try{localStorage.setItem(STORE,JSON.stringify({sheets,active}));document.getElementById('saveStatus').textContent='● Auto-saved in this browser'}catch{document.getElementById('saveStatus').textContent='● Browser save unavailable — use Save backup'}}
+function build(){head.innerHTML='<th class="corner"></th>';for(let c=0;c<COLS;c++){let th=document.createElement('th');th.textContent=letters(c);head.append(th)}body.innerHTML='';for(let r=0;r<ROWS;r++){let tr=document.createElement('tr'),rh=document.createElement('th');rh.className='rowhead';rh.textContent=r+1;tr.append(rh);for(let c=0;c<COLS;c++){let td=document.createElement('td');td.contentEditable='true';td.spellcheck=false;td.dataset.r=r;td.dataset.c=c;td.addEventListener('focus',()=>select(r,c));td.addEventListener('input',()=>{remember();current().data[key(r,c)]=td.textContent;document.getElementById('formulaInput').value=td.textContent;save()});td.addEventListener('blur',()=>{render();save()});
+td.addEventListener('paste',e=>{const clip=(e.clipboardData||window.clipboardData).getData('text');if(clip.includes('\\t')||clip.includes('\\n')){e.preventDefault();remember();const rows=clip.replace(/\\r/g,'').split('\\n');rows.forEach((line,ri)=>line.split('\\t').forEach((value,ci)=>{if(r+ri<ROWS&&c+ci<COLS)current().data[key(r+ri,c+ci)]=value}));render();save();select(r,c);cell(r,c).focus()}});
+td.addEventListener('keydown',e=>{
+if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='c'){const v=current().data[key(r,c)]??'';if(navigator.clipboard?.writeText)navigator.clipboard.writeText(v).catch(()=>{});}
+if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='v'){/* Native paste handler supports multi-cell TSV from spreadsheet apps. */}
+if(e.key==='Enter'){e.preventDefault();move(1,0)}else if(e.key==='Tab'){e.preventDefault();move(0,e.shiftKey?-1:1)}else if(e.key==='ArrowUp'&&e.ctrlKey){e.preventDefault();move(-1,0)}});tr.append(td)}body.append(tr)}render();select(0,0)}
+function cell(r,c){return body.rows[r]?.cells[c+1]}
+function parse(s){let m=s.match(/^([A-Z]+)(\d+)$/i);if(!m)return null;let c=0;for(let ch of m[1].toUpperCase())c=c*26+ch.charCodeAt(0)-64;return{r:+m[2]-1,c:c-1}}
+function range(a,b){let p=parse(a),q=parse(b);if(!p||!q)return[];let out=[];for(let r=Math.min(p.r,q.r);r<=Math.max(p.r,q.r);r++)for(let c=Math.min(p.c,q.c);c<=Math.max(p.c,q.c);c++)out.push(current().data[key(r,c)]??'');return out}
+function evaluate(raw,depth=0){if(depth>8)return'#CYCLE';if(!raw||raw[0]!=='=')return raw??'';let expr=raw.slice(1).trim();const fn=/^(SUM|AVERAGE|AVG|MIN|MAX|COUNT)\(([A-Z]+\d+):([A-Z]+\d+)\)$/i.exec(expr);if(fn){let vals=range(fn[2],fn[3]).map(x=>Number(evaluate(String(x),depth+1))).filter(Number.isFinite),f=fn[1].toUpperCase();if(f==='SUM')return vals.reduce((a,b)=>a+b,0);if(f==='MIN')return vals.length?Math.min(...vals):0;if(f==='MAX')return vals.length?Math.max(...vals):0;if(f==='COUNT')return vals.length;if(f==='AVG'||f==='AVERAGE')return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0}
+expr=expr.replace(/\b([A-Z]+\d+)\b/gi,m=>{let v=current().data[m.toUpperCase()]??'0';let n=Number(evaluate(String(v),depth+1));return Number.isFinite(n)?String(n):'0'});
+if(!/^[\d+\-*/().\s]+$/.test(expr))return'#ERROR';try{return String(safeMath(expr))}catch{return'#ERROR'}}
+function safeMath(s){let tokens=s.match(/\d+(?:\.\d+)?|[()+\-*/]/g)||[],i=0;function factor(){let t=tokens[i++];if(t==='('){let v=add();if(tokens[i++]!==')')throw 0;return v}if(t==='-')return-factor();if(t==='+')return factor();let n=Number(t);if(!Number.isFinite(n))throw 0;return n}function mul(){let v=factor();while(tokens[i]==='*'||tokens[i]==='/'){let op=tokens[i++],b=factor();v=op==='*'?v*b:v/b}return v}function add(){let v=mul();while(tokens[i]==='+'||tokens[i]==='-'){let op=tokens[i++],b=mul();v=op==='+'?v+b:v-b}return v}let v=add();if(i!==tokens.length||!Number.isFinite(v))throw 0;return Math.round(v*1e10)/1e10}
+function select(r,c){selected={r,c};document.getElementById('cellRef').value=key(r,c);document.getElementById('formulaInput').value=current().data[key(r,c)]??'';document.querySelectorAll('td.selected').forEach(x=>x.classList.remove('selected'));cell(r,c)?.classList.add('selected')}
+function move(dr,dc){let r=Math.max(0,Math.min(ROWS-1,selected.r+dr)),c=Math.max(0,Math.min(COLS-1,selected.c+dc));cell(r,c).focus();select(r,c)}
+function render(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){let k=key(r,c),td=cell(r,c);if(document.activeElement!==td)td.textContent=evaluate(current().data[k]??'');let st=current().styles[k]||{};td.style.fontWeight=st.bold?'bold':'';td.style.fontStyle=st.italic?'italic':'';td.style.textAlign=st.align||'';td.style.fontSize=st.size?st.size+'px':'';td.style.color=st.color||'';td.style.backgroundColor=st.fill||''}}
+function format(prop,val){remember();let k=key(selected.r,selected.c);current().styles[k]??={};current().styles[k][prop]=val;render();save();cell(selected.r,selected.c).focus()}
+document.getElementById('formulaInput').addEventListener('keydown',e=>{if(e.key==='Enter'){remember();current().data[key(selected.r,selected.c)]=e.target.value;render();save();cell(selected.r,selected.c).focus()}});
+document.getElementById('boldBtn').onclick=()=>format('bold',!current().styles[key(selected.r,selected.c)]?.bold);document.getElementById('italicBtn').onclick=()=>format('italic',!current().styles[key(selected.r,selected.c)]?.italic);document.getElementById('leftBtn').onclick=()=>format('align','left');document.getElementById('centerBtn').onclick=()=>format('align','center');document.getElementById('fontSize').onchange=e=>format('size',e.target.value);
+document.getElementById('clearBtn').onclick=()=>{remember();delete current().data[key(selected.r,selected.c)];render();save();cell(selected.r,selected.c).focus()};
+document.getElementById('sumBtn').onclick=()=>{remember();let col=letters(selected.c),last=Math.max(1,selected.r);current().data[key(selected.r,selected.c)]='=SUM('+col+'1:'+col+last+')';render();save();select(selected.r,selected.c)};
+document.getElementById('newBtn').onclick=()=>{if(confirm('Create a new spreadsheet? This starts a fresh workbook.')){remember();sheets=[fresh('Sheet1')];active=0;build();renderTabs();save()}};
+document.getElementById('addSheet').onclick=()=>{remember();sheets.push(fresh('Sheet'+(sheets.length+1)));active=sheets.length-1;build();renderTabs();save()};
+function renderTabs(){let tabs=document.getElementById('tabs');tabs.querySelectorAll('.tab').forEach(x=>x.remove());sheets.forEach((s,i)=>{let b=document.createElement('button');b.className='tab'+(i===active?' active':'');b.textContent=s.name;b.onclick=()=>{active=i;build();renderTabs();document.getElementById('filename').value=current().name};b.ondblclick=()=>{let n=prompt('Rename worksheet:',s.name);if(n&&n.trim()){remember();s.name=n.trim();renderTabs();save()}};tabs.insertBefore(b,document.getElementById('addSheet'))})}
+document.getElementById('sampleBtn').onclick=()=>{remember();Object.assign(current().data,{'A1':'Item','B1':'Quantity','C1':'Price','D1':'Total','A2':'Notebook','B2':'3','C2':'40','D2':'=B2*C2','A3':'Pen','B3':'5','C3':'10','D3':'=B3*C3','A4':'Grand total','D4':'=SUM(D2:D3)'});render();save()};
+document.getElementById('filename').oninput=e=>{current().name=e.target.value||'Untitled';renderTabs();save()};
+document.getElementById('themeBtn').onclick=()=>{document.body.classList.toggle('dark');document.getElementById('themeBtn').textContent=document.body.classList.contains('dark')?'☀ Light':'☾ Dark'};
+document.getElementById('csvBtn').onclick=()=>{let rows=[];for(let r=0;r<ROWS;r++){let vals=[];for(let c=0;c<COLS;c++){let v=evaluate(current().data[key(r,c)]??'');vals.push('"'+String(v).replace(/"/g,'""')+'"')}if(vals.some(v=>v!=='""'))rows.push(vals.join(','))}let blob=new Blob([rows.join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(current().name||'spreadsheet')+'.csv';a.click();URL.revokeObjectURL(a.href)};
+
+
+function downloadFile(name, content, type){
+ const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+document.getElementById('backupBtn').onclick=()=>{
+ const payload={app:'Sheetly',version:5,savedAt:new Date().toISOString(),sheets,active};
+ downloadFile('sheetly-backup.json',JSON.stringify(payload,null,2),'application/json');
+ document.getElementById('saveStatus').textContent='● Backup file downloaded';
+};
+document.getElementById('restoreBtn').onclick=()=>document.getElementById('backupInput').click();
+document.getElementById('backupInput').onchange=async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const payload=JSON.parse(await file.text());
+  if(!Array.isArray(payload.sheets)||!payload.sheets.length||!payload.sheets.every(s=>s&&typeof s.name==='string'&&s.data&&typeof s.data==='object')){
+   throw new Error('That file does not look like a Sheetly backup.');
+  }
+  if(!confirm('Restore this backup? It will replace the workbook currently open in Sheetly.')){e.target.value='';return}
+  remember();sheets=payload.sheets;active=Math.max(0,Math.min(Number(payload.active)||0,sheets.length-1));
+  build();renderTabs();document.getElementById('filename').value=current().name||'Untitled';save();
+  document.getElementById('saveStatus').textContent='● Backup restored';
+ }catch(err){alert(err.message||'Could not read that backup file.')}
+ e.target.value='';
+};
+
+
+document.getElementById('textColor').oninput=e=>format('color',e.target.value);
+document.getElementById('fillColor').oninput=e=>format('fill',e.target.value);
+document.getElementById('undoBtn').onclick=undo;
+document.getElementById('redoBtn').onclick=redo;
+document.getElementById('duplicateSheet').onclick=()=>{
+ remember();const copy=JSON.parse(JSON.stringify(current()));copy.name=current().name+' copy';sheets.splice(active+1,0,copy);active++;build();renderTabs();document.getElementById('filename').value=current().name;save();
+};
+document.getElementById('deleteSheet').onclick=()=>{
+ if(sheets.length===1){alert('A workbook must have at least one sheet.');return}
+ if(!confirm('Delete the active sheet?'))return;remember();sheets.splice(active,1);active=Math.max(0,active-1);build();renderTabs();document.getElementById('filename').value=current().name;save();
+};
+document.addEventListener('keydown',e=>{
+ const mod=e.ctrlKey||e.metaKey;
+ if(mod&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}
+ else if(mod&&e.key.toLowerCase()==='y'){e.preventDefault();redo()}
+});
+document.getElementById('filename').onchange=e=>{remember();current().name=e.target.value.trim()||'Untitled';renderTabs();save()};
+
+document.getElementById('importBtn').onclick=()=>document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange=async e=>{
+ const file=e.target.files[0];if(!file)return;
+ const text=await file.text();
+ const rows=[];let row=[],field='',quoted=false;
+ for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];
+  if(ch==='"'&&quoted&&next==='"'){field+='"';i++}
+  else if(ch==='"'){quoted=!quoted}
+  else if(ch===','&&!quoted){row.push(field);field=''}
+  else if((ch==='\\n'||ch==='\\r')&&!quoted){if(ch==='\\r'&&next==='\\n')i++;row.push(field);rows.push(row);row=[];field=''}
+  else field+=ch;
+ }
+ if(field.length||row.length){row.push(field);rows.push(row)}
+ current().data={};
+ rows.slice(0,ROWS).forEach((cells,r)=>cells.slice(0,COLS).forEach((v,c)=>{if(v!=='')current().data[key(r,c)]=v}));
+ render();save();select(0,0);e.target.value='';
+};
+document.getElementById('chartBtn').onclick=()=>{let labels=[],vals=[];for(let r=1;r<ROWS;r++){let label=current().data[key(r,0)],v=Number(evaluate(current().data[key(r,1)]??''));if(label!==undefined&&label!==''&&Number.isFinite(v)){labels.push(label);vals.push(v)}}if(!vals.length){alert('Add labels in column A and numbers in column B, then try Chart.');return}let max=Math.max(...vals,1),chart=document.getElementById('chart');chart.innerHTML='';labels.forEach((label,i)=>{let w=document.createElement('div');w.className='barwrap';let v=document.createElement('span');v.className='barval';v.textContent=vals[i];let bar=document.createElement('div');bar.className='bar';bar.style.height=Math.max(2,vals[i]/max*175)+'px';bar.title=label+': '+vals[i];let l=document.createElement('span');l.className='barlabel';l.textContent=label;w.append(v,bar,l);chart.append(w)});document.getElementById('chartTitle').textContent=current().name+' — Bar chart';document.getElementById('chartModal').classList.add('show')};
+document.getElementById('closeChart').onclick=()=>document.getElementById('chartModal').classList.remove('show');document.getElementById('chartModal').onclick=e=>{if(e.target.id==='chartModal')e.currentTarget.classList.remove('show')};
+load();active=Math.min(active,sheets.length-1);build();renderTabs();document.getElementById('filename').value=current().name;save();
+</script></body></html>
